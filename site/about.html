@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoutline — methodology</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="mark-block">
+        <p class="mark">Scoutline</p>
+        <p class="mark-sub">Argentina 3–3 France (4–2 pens)<br>2022 World Cup Final</p>
+      </div>
+      <nav class="views">
+        <a href="index.html">Shot map</a>
+        <a href="network.html">Pass network</a>
+        <a href="players.html">Player explorer</a>
+        <a href="about.html" class="active">Methodology</a>
+      </nav>
+    </aside>
+
+    <main>
+      <h1 class="page-title">Methodology</h1>
+      <p class="page-sub">What the numbers on this site actually mean, and where they come from.</p>
+
+      <div class="prose">
+        <h2>The xG model</h2>
+        <p>Each shot's expected-goals value comes from a logistic regression trained on shot distance and shot angle to the goal mouth, fit on a small sample of 2022 World Cup knockout matches. StatsBomb's own <code>statsbomb_xg</code> field is also included in the shot data for comparison — this model is simpler on purpose, since the point is to show the concept end to end rather than match a commercial model's accuracy.</p>
+
+        <h2>The pass network</h2>
+        <p>Each player is placed at their average touch location for the match, counting only their touches up to their team's first substitution. Edges connect players who completed at least two passes to each other in that window, with line width proportional to pass count.</p>
+
+        <h2>The value score</h2>
+        <p>Player scores compare each shot-taker's total match xG to a market value figure, normalized to 0–100 against the rest of the players in the dataset. The market values used here are illustrative sample figures for demo purposes, not live data — StatsBomb's open data doesn't include valuations, and this project reads them from a plain CSV file you can replace with your own figures.</p>
+
+        <h2>Data source and license</h2>
+        <p>Match event data is from <a href="https://github.com/statsbomb/open-data" target="_blank" rel="noopener">StatsBomb's open data</a>, free for non-commercial and educational use. All data here is used under that license, credited to StatsBomb.</p>
+      </div>
+
+      <footer class="credit">Data provided by StatsBomb. Built as a portfolio project — not affiliated with StatsBomb or FIFA.</footer>
+    </main>
+  </div>
+</body>
+</html>
