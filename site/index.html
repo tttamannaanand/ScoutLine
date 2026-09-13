@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoutline — shot map</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div class="mark-block">
+        <p class="mark">Scoutline</p>
+        <p class="mark-sub">Argentina 3–3 France (4–2 pens)<br>2022 World Cup Final</p>
+      </div>
+      <nav class="views">
+        <a href="index.html" class="active">Shot map</a>
+        <a href="network.html">Pass network</a>
+        <a href="players.html">Player explorer</a>
+        <a href="about.html">Methodology</a>
+      </nav>
+      <p class="rail-note">Data from StatsBomb open data. xG modeled from scratch on shot distance and angle.</p>
+    </aside>
+
+    <main>
+      <h1 class="page-title">Shot map</h1>
+      <p class="page-sub">Every shot from the match, sized by expected goals. Circles in red found the net.</p>
+
+      <div class="stat-row">
+        <div class="stat-card"><p class="label">Total xG</p><p class="value" id="stat-xg">—</p></div>
+        <div class="stat-card"><p class="label">Shots</p><p class="value" id="stat-shots">—</p></div>
+        <div class="stat-card"><p class="label">Goals</p><p class="value" id="stat-goals">—</p></div>
+      </div>
+
+      <div class="controls-row">
+        <select id="team-filter">
+          <option value="all">Both teams</option>
+        </select>
+      </div>
+
+      <div class="pitch-frame" id="pitch-frame">
+        <svg id="pitch-svg" class="pitch" viewBox="0 0 680 440" role="img" aria-label="Football pitch with shot markers sized by expected goals"></svg>
+        <div class="legend-row">
+          <span><span class="dot" style="background: var(--floodlight);"></span>shot (size = xG)</span>
+          <span><span class="dot" style="background: var(--goal);"></span>goal</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/pitch.js"></script>
+  <script src="js/shotmap.js"></script>
+</body>
+</html>
