@@ -9,31 +9,33 @@
 <body>
   <div class="shell">
     <aside class="rail">
-      <div class="mark-block">
-        <p class="mark">Scoutline</p>
-        <p class="mark-sub">Argentina 3–3 France (4–2 pens)<br>2022 World Cup Final</p>
-      </div>
+      <p class="mark">Scoutline</p>
+      <p class="mark-sub">Club scouting mode</p>
+
+      <select id="comp-toggle" class="comp-select"></select>
+
       <nav class="views">
         <a href="index.html">Shot map</a>
         <a href="network.html" class="active">Pass network</a>
         <a href="players.html">Player explorer</a>
         <a href="about.html">Methodology</a>
       </nav>
-      <p class="rail-note">Nodes sit at each player's average touch location. Edge width reflects pass frequency, up to each team's first substitution.</p>
+
+      <p class="rail-note">Nodes sit at each player's average touch location across every match they played, up to each match's first substitution.</p>
     </aside>
 
     <main>
       <h1 class="page-title">Pass network</h1>
-      <p class="page-sub">Team shape and passing chemistry from kickoff to the first substitution.</p>
+      <p class="page-sub">Pick a club to see their shape and passing chemistry, aggregated across their matches in this dataset.</p>
 
       <div class="controls-row">
-        <select id="team-filter"></select>
+        <select id="club-filter"></select>
       </div>
 
       <div class="pitch-frame" id="pitch-frame">
-        <svg id="pitch-svg" class="pitch" viewBox="0 0 680 440" role="img" aria-label="Football pitch showing player positions as nodes connected by pass-frequency edges"></svg>
+        <svg id="pitch-svg" class="pitch" viewBox="0 0 680 420" role="img" aria-label="Football pitch showing a club's players as nodes connected by pass-frequency edges"></svg>
         <div class="legend-row">
-          <span><span class="dot" style="background: var(--floodlight);"></span>node size = touches</span>
+          <span><span class="dot" style="background: var(--green);"></span>node size = touches</span>
           <span>line width = passes between the pair</span>
         </div>
       </div>
@@ -41,6 +43,7 @@
   </div>
 
   <script src="js/pitch.js"></script>
+  <script src="js/shell.js"></script>
   <script src="js/passnetwork.js"></script>
 </body>
 </html>

@@ -1,29 +1,31 @@
-const MATCH_ID = 3869685; // Argentina vs France, 2022 World Cup Final
+let shotsCache = {};
 
-async function loadShots() {
-  const res = await fetch(`output/shots_${MATCH_ID}.json`);
+async function loadShots(datasetId) {
+  if (shotsCache[datasetId]) return shotsCache[datasetId];
+  const res = await fetch(`output/shots_${datasetId}.json`);
   if (!res.ok) throw new Error('Could not load shot data');
-  return res.json();
+  const data = await res.json();
+  shotsCache[datasetId] = data;
+  return data;
 }
 
-function renderStats(shots) {
+function renderStats(shots, meta) {
   const totalXg = shots.reduce((sum, s) => sum + s.our_xg, 0);
   const goals = shots.filter(s => s.is_goal).length;
 
-  document.getElementById('stat-xg').textContent = totalXg.toFixed(2);
-  document.getElementById('stat-shots').textContent = shots.length;
+  document.getElementById('stat-clubs').textContent = meta.clubs;
+  document.getElementById('stat-matches').textContent = meta.matches;
+  document.getElementById('stat-xg').textContent = totalXg.toFixed(1);
   document.getElementById('stat-goals').textContent = goals;
 }
 
-function renderPitch(shots, teamFilter) {
+function renderPitch(shots) {
   const svg = document.getElementById('pitch-svg');
-  const filtered = teamFilter === 'all' ? shots : shots.filter(s => s.team === teamFilter);
 
-  const markers = filtered.map(s => {
+  const markers = shots.map(s => {
     const cx = pitchToSvgX(s.location[0]);
     const cy = pitchToSvgY(s.location[1]);
-    // marker radius scales with xG: min 4px, max 16px
-    const r = 4 + Math.sqrt(s.our_xg) * 22;
+    const r = 3 + Math.sqrt(s.our_xg) * 18;
     const cls = s.is_goal ? 'shot-marker goal' : 'shot-marker';
     return `<circle class="${cls}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}"
               data-player="${s.player}" data-team="${s.team}" data-minute="${s.minute}"
@@ -35,41 +37,36 @@ function renderPitch(shots, teamFilter) {
   svg.querySelectorAll('.shot-marker').forEach(el => {
     el.addEventListener('mousemove', (evt) => {
       const d = el.dataset;
-      showTooltip(
-        evt,
-        `${d.player}`,
-        `${d.team} · min ${d.minute} · xG ${parseFloat(d.xg).toFixed(2)} · ${d.outcome}`
-      );
+      showTooltip(evt, d.player, `${d.team} · min ${d.minute} · xG ${parseFloat(d.xg).toFixed(2)} · ${d.outcome}`);
     });
     el.addEventListener('mouseleave', hideTooltip);
   });
 }
 
-async function init() {
-  const data = await loadShots();
-  const shots = data.shots;
-
-  renderStats(shots);
-  renderPitch(shots, 'all');
-
-  const teamSelect = document.getElementById('team-filter');
-  const teams = [...new Set(shots.map(s => s.team))];
-  teams.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t;
-    teamSelect.appendChild(opt);
-  });
-
-  teamSelect.addEventListener('change', () => {
-    const filtered = teamSelect.value === 'all' ? shots : shots.filter(s => s.team === teamSelect.value);
-    renderStats(filtered);
-    renderPitch(shots, teamSelect.value);
-  });
+function populateClubFilter(shots) {
+  const clubSelect = document.getElementById('club-filter');
+  const clubs = [...new Set(shots.map(s => s.team))].sort();
+  clubSelect.innerHTML = '<option value="all">All clubs</option>' +
+    clubs.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-init().catch(err => {
+async function onDatasetChange(datasetId) {
+  const data = await loadShots(datasetId);
+  const meta = currentDatasetMeta();
+  populateClubFilter(data.shots);
+  renderStats(data.shots, meta);
+  renderPitch(data.shots);
+
+  const clubSelect = document.getElementById('club-filter');
+  clubSelect.onchange = () => {
+    const filtered = clubSelect.value === 'all' ? data.shots : data.shots.filter(s => s.team === clubSelect.value);
+    renderStats(filtered, meta);
+    renderPitch(filtered);
+  };
+}
+
+initCompetitionToggle(onDatasetChange).catch(err => {
   console.error(err);
   document.getElementById('pitch-frame').innerHTML =
-    `<p style="color: var(--chalk-dim); font-size: 13px;">Couldn't load shot data. Run the pipeline scripts first, or check that output/shots_${MATCH_ID}.json exists.</p>`;
+    `<p style="color: var(--text-dim); font-size: 13px;">Couldn't load data. Run the pipeline scripts first.</p>`;
 });

@@ -1,9 +1,12 @@
-const MATCH_ID = 3869685;
+let networkCache = {};
 
-async function loadNetwork() {
-  const res = await fetch(`output/pass_network_${MATCH_ID}.json`);
+async function loadNetwork(datasetId) {
+  if (networkCache[datasetId]) return networkCache[datasetId];
+  const res = await fetch(`output/pass_network_${datasetId}.json`);
   if (!res.ok) throw new Error('Could not load pass network data');
-  return res.json();
+  const data = await res.json();
+  networkCache[datasetId] = data;
+  return data;
 }
 
 function renderNetwork(network) {
@@ -29,38 +32,32 @@ function renderNetwork(network) {
               data-player="${n.player}" data-touches="${n.touches}"></circle>`;
   }).join('');
 
-  // edges first so nodes render on top
   svg.innerHTML = pitchMarkupSVG() + edgeMarkup + nodeMarkup;
 
   svg.querySelectorAll('.node-dot').forEach(el => {
     el.addEventListener('mousemove', (evt) => {
       const d = el.dataset;
-      showTooltip(evt, d.player, `${d.touches} touches before first substitution`);
+      showTooltip(evt, d.player, `${d.touches} touches across matches played`);
     });
     el.addEventListener('mouseleave', hideTooltip);
   });
 }
 
-async function init() {
-  const data = await loadNetwork();
-  const teamSelect = document.getElementById('team-filter');
-  const teamNames = Object.keys(data.teams);
+async function onDatasetChange(datasetId) {
+  const data = await loadNetwork(datasetId);
+  const clubSelect = document.getElementById('club-filter');
+  const clubs = Object.keys(data.clubs).sort();
 
-  teamNames.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t;
-    teamSelect.appendChild(opt);
-  });
+  clubSelect.innerHTML = clubs.map(c => `<option value="${c}">${c}</option>`).join('');
+  clubSelect.value = clubs[0];
 
-  const draw = () => renderNetwork(data.teams[teamSelect.value]);
-  teamSelect.value = teamNames[0];
+  const draw = () => renderNetwork(data.clubs[clubSelect.value]);
   draw();
-  teamSelect.addEventListener('change', draw);
+  clubSelect.onchange = draw;
 }
 
-init().catch(err => {
+initCompetitionToggle(onDatasetChange).catch(err => {
   console.error(err);
   document.getElementById('pitch-frame').innerHTML =
-    `<p style="color: var(--chalk-dim); font-size: 13px;">Couldn't load pass network data. Run the pipeline scripts first, or check that output/pass_network_${MATCH_ID}.json exists.</p>`;
+    `<p style="color: var(--text-dim); font-size: 13px;">Couldn't load data. Run the pipeline scripts first.</p>`;
 });
