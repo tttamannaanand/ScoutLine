@@ -1,69 +1,84 @@
 """
-Downloads a match's event data from StatsBomb's free open-data repo.
-
-StatsBomb open data covers a set of competitions (men's and women's World
-Cups, Euros, some domestic league seasons, etc). No API key needed - it's
-just JSON files on GitHub. Data is licensed for non-commercial / educational
-use - credit StatsBomb wherever you show the data (see site/about.html).
+Downloads every match's event data for a dataset (see datasets.py) from
+StatsBomb's free open-data repo, and caches it to disk so re-running the
+rest of the pipeline doesn't re-download everything.
 
 Usage:
-    python fetch_data.py                     # fetches the default sample match
-    python fetch_data.py --match-id 3869685   # fetch a specific match
-    python fetch_data.py --list-competitions  # see what's available
+    python fetch_data.py --dataset premier-league-2015-16
+    python fetch_data.py --dataset champions-league-finals
+    python fetch_data.py --dataset premier-league-2015-16 --limit 20   # quick test run
 """
 import argparse
 import json
 import os
+import time
+
 import requests
+
+from datasets import DATASET_BY_ID
 
 BASE = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 
-# 2022 World Cup Final, Argentina vs France - good default: dramatic match,
-# lots of shots, well known, so pass network / shot map screenshots make sense
-# to anyone looking at your profile without extra context.
-DEFAULT_MATCH_ID = 3869685
-
 
 def fetch_json(path):
-    url = f"{BASE}/{path}"
-    r = requests.get(url, timeout=30)
+    r = requests.get(f"{BASE}/{path}", timeout=30)
     r.raise_for_status()
     return r.json()
 
 
-def list_competitions():
-    comps = fetch_json("competitions.json")
-    seen = set()
-    for c in comps:
-        key = (c["competition_name"], c["season_name"])
-        if key not in seen:
-            seen.add(key)
-            print(f"{c['competition_id']:>4}  {c['season_id']:>4}  {c['competition_name']} - {c['season_name']}")
+def fetch_dataset(dataset_id, limit=None):
+    dataset = DATASET_BY_ID[dataset_id]
+    out_dir = os.path.join(DATA_DIR, dataset_id)
+    os.makedirs(os.path.join(out_dir, "events"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "lineups"), exist_ok=True)
 
+    all_matches = []
+    for comp_id, season_id in dataset["competitions"]:
+        matches = fetch_json(f"matches/{comp_id}/{season_id}.json")
+        all_matches.extend(matches)
 
-def fetch_match(match_id):
-    os.makedirs(DATA_DIR, exist_ok=True)
+    if limit:
+        all_matches = all_matches[:limit]
 
-    events = fetch_json(f"events/{match_id}.json")
-    lineups = fetch_json(f"lineups/{match_id}.json")
+    print(f"{dataset['label']}: {len(all_matches)} matches to fetch")
 
-    with open(os.path.join(DATA_DIR, f"events_{match_id}.json"), "w") as f:
-        json.dump(events, f)
-    with open(os.path.join(DATA_DIR, f"lineups_{match_id}.json"), "w") as f:
-        json.dump(lineups, f)
+    match_index = []
+    for i, m in enumerate(all_matches):
+        mid = m["match_id"]
+        events_path = os.path.join(out_dir, "events", f"{mid}.json")
 
-    print(f"Saved {len(events)} events and lineup data for match {match_id} to /data")
-    return events, lineups
+        if not os.path.exists(events_path):
+            try:
+                events = fetch_json(f"events/{mid}.json")
+                with open(events_path, "w") as f:
+                    json.dump(events, f)
+            except Exception as e:
+                print(f"  [{i+1}/{len(all_matches)}] skipped {mid}: {e}")
+                continue
+            time.sleep(0.05)  # be polite to raw.githubusercontent.com
+
+        match_index.append({
+            "match_id": mid,
+            "home_team": m["home_team"]["home_team_name"],
+            "away_team": m["away_team"]["away_team_name"],
+            "competition": m["competition"]["competition_name"],
+            "season": m["season"]["season_name"],
+            "match_date": m.get("match_date"),
+        })
+        if (i + 1) % 25 == 0:
+            print(f"  fetched {i+1}/{len(all_matches)}")
+
+    with open(os.path.join(out_dir, "match_index.json"), "w") as f:
+        json.dump(match_index, f, indent=2)
+
+    print(f"Done. {len(match_index)} matches cached in data/{dataset_id}/")
+    return match_index
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--match-id", type=int, default=DEFAULT_MATCH_ID)
-    parser.add_argument("--list-competitions", action="store_true")
+    parser.add_argument("--dataset", required=True, choices=list(DATASET_BY_ID.keys()))
+    parser.add_argument("--limit", type=int, default=None, help="fetch only the first N matches, for a quick test run")
     args = parser.parse_args()
-
-    if args.list_competitions:
-        list_competitions()
-    else:
-        fetch_match(args.match_id)
+    fetch_dataset(args.dataset, limit=args.limit)

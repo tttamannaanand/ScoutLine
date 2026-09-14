@@ -9,46 +9,48 @@
 <body>
   <div class="shell">
     <aside class="rail">
-      <div class="mark-block">
-        <p class="mark">Scoutline</p>
-        <p class="mark-sub">Argentina 3–3 France (4–2 pens)<br>2022 World Cup Final</p>
-      </div>
+      <p class="mark">Scoutline</p>
+      <p class="mark-sub">Club scouting mode</p>
+
+      <select id="comp-toggle" class="comp-select"></select>
+
       <nav class="views">
         <a href="index.html" class="active">Shot map</a>
         <a href="network.html">Pass network</a>
         <a href="players.html">Player explorer</a>
         <a href="about.html">Methodology</a>
       </nav>
-      <p class="rail-note">Data from StatsBomb open data. xG modeled from scratch on shot distance and angle.</p>
+
+      <p class="rail-note">Champions League here is a finals archive (1970–2019), not a full season — see methodology.</p>
     </aside>
 
     <main>
       <h1 class="page-title">Shot map</h1>
-      <p class="page-sub">Every shot from the match, sized by expected goals. Circles in red found the net.</p>
+      <p class="page-sub">Every shot across the dataset, sized by expected goals. Filter by club to see just their attempts.</p>
 
       <div class="stat-row">
+        <div class="stat-card"><p class="label">Clubs</p><p class="value" id="stat-clubs">—</p></div>
+        <div class="stat-card"><p class="label">Matches</p><p class="value" id="stat-matches">—</p></div>
         <div class="stat-card"><p class="label">Total xG</p><p class="value" id="stat-xg">—</p></div>
-        <div class="stat-card"><p class="label">Shots</p><p class="value" id="stat-shots">—</p></div>
         <div class="stat-card"><p class="label">Goals</p><p class="value" id="stat-goals">—</p></div>
       </div>
 
       <div class="controls-row">
-        <select id="team-filter">
-          <option value="all">Both teams</option>
-        </select>
+        <select id="club-filter"><option value="all">All clubs</option></select>
       </div>
 
       <div class="pitch-frame" id="pitch-frame">
-        <svg id="pitch-svg" class="pitch" viewBox="0 0 680 440" role="img" aria-label="Football pitch with shot markers sized by expected goals"></svg>
+        <svg id="pitch-svg" class="pitch" viewBox="0 0 680 420" role="img" aria-label="Football pitch with shot markers sized by expected goals"></svg>
         <div class="legend-row">
-          <span><span class="dot" style="background: var(--floodlight);"></span>shot (size = xG)</span>
-          <span><span class="dot" style="background: var(--goal);"></span>goal</span>
+          <span><span class="dot" style="background: var(--green);"></span>shot (size = xG)</span>
+          <span><span class="dot" style="background: var(--white-marker);"></span>goal</span>
         </div>
       </div>
     </main>
   </div>
 
   <script src="js/pitch.js"></script>
+  <script src="js/shell.js"></script>
   <script src="js/shotmap.js"></script>
 </body>
 </html>
