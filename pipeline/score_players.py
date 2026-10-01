@@ -6,6 +6,7 @@ a market value figure from data/market_values.csv.
 Usage:
     python score_players.py --dataset premier-league-2015-16
 """
+
 import argparse
 import csv
 import json
@@ -37,10 +38,16 @@ def load_market_values():
 
 def aggregate_players(dataset_id):
     events_dir = os.path.join(DATA_DIR, dataset_id, "events")
-    stats = defaultdict(lambda: {
-        "shots": 0, "goals": 0, "xg": 0.0, "matches": set(),
-        "team": None, "position": None,
-    })
+    stats = defaultdict(
+        lambda: {
+            "shots": 0,
+            "goals": 0,
+            "xg": 0.0,
+            "matches": set(),
+            "team": None,
+            "position": None,
+        }
+    )
 
     if not os.path.exists(events_dir):
         return stats
@@ -84,18 +91,20 @@ def score_players(dataset_id):
         xg_p90 = (s["xg"] / minutes) * 90 if minutes else 0
         output_per_value = xg_p90 / value
 
-        rows.append({
-            "player": player,
-            "team": s["team"],
-            "position": s["position"],
-            "appearances": appearances,
-            "shots": s["shots"],
-            "goals": s["goals"],
-            "xg_total": round(s["xg"], 2),
-            "xg_p90": round(xg_p90, 3),
-            "market_value_eur_m": value,
-            "output_per_value": output_per_value,
-        })
+        rows.append(
+            {
+                "player": player,
+                "team": s["team"],
+                "position": s["position"],
+                "appearances": appearances,
+                "shots": s["shots"],
+                "goals": s["goals"],
+                "xg_total": round(s["xg"], 2),
+                "xg_p90": round(xg_p90, 3),
+                "market_value_eur_m": value,
+                "output_per_value": output_per_value,
+            }
+        )
 
     if rows:
         max_opv = max(r["output_per_value"] for r in rows) or 1

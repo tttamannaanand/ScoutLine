@@ -8,13 +8,13 @@ Usage:
     python fetch_data.py --dataset champions-league-finals
     python fetch_data.py --dataset premier-league-2015-16 --limit 20   # quick test run
 """
+
 import argparse
 import json
 import os
 import time
 
 import requests
-
 from datasets import DATASET_BY_ID
 
 BASE = "https://raw.githubusercontent.com/statsbomb/open-data/master/data"
@@ -53,21 +53,23 @@ def fetch_dataset(dataset_id, limit=None):
                 events = fetch_json(f"events/{mid}.json")
                 with open(events_path, "w") as f:
                     json.dump(events, f)
-            except Exception as e:
-                print(f"  [{i+1}/{len(all_matches)}] skipped {mid}: {e}")
+            except (requests.RequestException, ValueError, OSError) as e:
+                print(f"  [{i + 1}/{len(all_matches)}] skipped {mid}: {e}")
                 continue
             time.sleep(0.05)  # be polite to raw.githubusercontent.com
 
-        match_index.append({
-            "match_id": mid,
-            "home_team": m["home_team"]["home_team_name"],
-            "away_team": m["away_team"]["away_team_name"],
-            "competition": m["competition"]["competition_name"],
-            "season": m["season"]["season_name"],
-            "match_date": m.get("match_date"),
-        })
+        match_index.append(
+            {
+                "match_id": mid,
+                "home_team": m["home_team"]["home_team_name"],
+                "away_team": m["away_team"]["away_team_name"],
+                "competition": m["competition"]["competition_name"],
+                "season": m["season"]["season_name"],
+                "match_date": m.get("match_date"),
+            }
+        )
         if (i + 1) % 25 == 0:
-            print(f"  fetched {i+1}/{len(all_matches)}")
+            print(f"  fetched {i + 1}/{len(all_matches)}")
 
     with open(os.path.join(out_dir, "match_index.json"), "w") as f:
         json.dump(match_index, f, indent=2)
@@ -79,6 +81,11 @@ def fetch_dataset(dataset_id, limit=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", required=True, choices=list(DATASET_BY_ID.keys()))
-    parser.add_argument("--limit", type=int, default=None, help="fetch only the first N matches, for a quick test run")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="fetch only the first N matches, for a quick test run",
+    )
     args = parser.parse_args()
     fetch_dataset(args.dataset, limit=args.limit)
