@@ -7,11 +7,20 @@
 [![Made with Python](https://img.shields.io/badge/pipeline-Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Vanilla JS](https://img.shields.io/badge/frontend-HTML%20%2F%20CSS%20%2F%20JS-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/)
 [![Data: StatsBomb](https://img.shields.io/badge/data-StatsBomb%20open--data-1DA462)](https://github.com/statsbomb/open-data)
-[![Deploy: Vercel](https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com)
+[![Deploy: Vercel](https://img.shields.io/badge/deploy-Vercel-000000?logo=vercel&logoColor=white)](https://scout-line.vercel.app)
+[![CI](https://github.com/tttamannaanand/ScoutLine/actions/workflows/ci.yml/badge.svg)](https://github.com/tttamannaanand/ScoutLine/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-[Live demo](#) · [Report a bug](../../issues) · [Methodology](site/about.html)
+**[Live demo → scout-line.vercel.app](https://scout-line.vercel.app)** · · [Report a bug](../../issues) · [Methodology](site/about.html)
 
 </div>
+
+<img src="docs/shotmap.png" alt="Shot map: every Premier League 2015/16 shot sized by modelled xG" width="100%">
+
+<table><tr>
+<td><img src="docs/network.png" alt="Pass network for one club"></td>
+<td><img src="docs/players.png" alt="Player explorer: xG per 90 against market value"></td>
+</tr></table>
 
 ---
 
@@ -47,31 +56,43 @@ StatsBomb open data  →  pipeline/*.py  →  site/output/*.json  →  static si
 
 Everything is precomputed offline into JSON. The site never runs Python or talks to a live API — it's pure `fetch()` calls against files sitting next to it, which is what makes it deployable on Vercel/GitHub Pages with zero backend. The xG model is trained once on all ~38,000 shots pooled across every dataset, then applied per-competition.
 
+## Results
+
+How the two-feature xG model compares with StatsBomb's own xG (which uses dozens of features: defender positions, shot type, assist type…) across all **38,482 shots** in the five datasets:
+
+| | Scoutline xG | StatsBomb xG |
+|---|---|---|
+| ROC AUC | **0.756** | 0.828 |
+| Brier score (lower is better) | **0.084** | 0.071 |
+| Total xG vs 3,943 actual goals | 3,685 | 3,820 |
+
+Distance and angle alone recover most of the signal. The remaining gap is what richer features buy you, and that gap is the honest headline.
+
 ## Quickstart
 
+The site's JSON is already committed, so you can preview it right away:
+
 ```bash
-git clone https://github.com/<your-username>/scoutline.git
-cd scoutline/pipeline
-pip install -r requirements.txt
-
-# pull match data for every dataset (see pipeline/datasets.py for the list)
-for ds in premier-league-2015-16 la-liga-2015-16 ligue-1-2015-16 serie-a-2015-16 champions-league-finals; do
-  python fetch_data.py --dataset $ds
-done
-
-# build the site's JSON for each dataset
-for ds in premier-league-2015-16 la-liga-2015-16 ligue-1-2015-16 serie-a-2015-16 champions-league-finals; do
-  python train_xg_model.py --dataset $ds
-  python build_pass_network.py --dataset $ds
-  python score_players.py --dataset $ds
-done
-python build_datasets_index.py
-
-# preview locally
-cd ../site
-python3 -m http.server 8000
-# → open http://localhost:8000
+git clone https://github.com/tttamannaanand/ScoutLine.git && cd ScoutLine
+python3 -m http.server 8000 --directory site   # → http://localhost:8000
 ```
+
+To rebuild every dataset from raw StatsBomb data:
+
+```bash
+pip install -r pipeline/requirements.txt
+./run_pipeline.sh              # or ./run_pipeline.sh --limit 5 for a quick run
+```
+
+## Development
+
+```bash
+pip install -r requirements-dev.txt
+pytest          # geometry, xG model and player-scoring tests
+ruff check . && ruff format --check .
+```
+
+CI runs the same checks on every push and pull request.
 
 ## Deploying
 
@@ -79,7 +100,7 @@ Push this repo to GitHub, import it on [Vercel](https://vercel.com), and it just
 
 ## Under the hood
 
-- **xG model** — logistic regression on shot distance + angle to goal, trained on every non-penalty shot pooled across both datasets
+- **xG model** — logistic regression on shot distance + angle to goal, trained on every non-penalty shot pooled across all five datasets
 - **Pass network** — average touch position per player, edges weighted by completed passes, capped to a club's busiest 16 players so the diagram stays legible
 - **Value score** — xG per 90 minutes ÷ market value, normalized 0–100 within the dataset. Market values are a sample CSV (`data/market_values.csv`) you can swap for real figures
 
@@ -91,6 +112,10 @@ Full breakdown of every modeling choice and its limitations lives on the site's 
 pipeline/   Python — pandas-free by design, just requests + scikit-learn + numpy
 site/       Vanilla HTML/CSS/JS — Space Grotesk + Inter + JetBrains Mono, no framework
 ```
+
+## License
+
+Code is [MIT](LICENSE). Match data stays under StatsBomb's licence (below).
 
 ## Credit
 

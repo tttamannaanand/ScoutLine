@@ -6,6 +6,7 @@ aggregated across all their matches, up to each match's first substitution.
 Usage:
     python build_pass_network.py --dataset premier-league-2015-16
 """
+
 import argparse
 import json
 import os
@@ -82,16 +83,14 @@ def build_networks(dataset_id):
             }
             for p in touch_count[club]
         ]
-        edges = [
-            {"players": list(k), "passes": v}
-            for k, v in edge_count[club].items()
-            if v >= 3
-        ]
+        edges = [{"players": list(k), "passes": v} for k, v in edge_count[club].items() if v >= 3]
         # cap to the busiest players/edges so the diagram stays readable
         # when a club appears across many matches
         nodes = sorted(nodes, key=lambda n: -n["touches"])[:16]
         node_names = {n["player"] for n in nodes}
-        edges = [e for e in edges if e["players"][0] in node_names and e["players"][1] in node_names]
+        edges = [
+            e for e in edges if e["players"][0] in node_names and e["players"][1] in node_names
+        ]
         edges = sorted(edges, key=lambda e: -e["passes"])[:40]
 
         networks[club] = {"nodes": nodes, "edges": edges}
