@@ -9,6 +9,7 @@ Run this LAST, after the other three pipeline scripts, for each dataset.
 Usage:
     python build_datasets_index.py
 """
+
 import json
 import os
 
@@ -49,12 +50,14 @@ def main():
     index = []
     for d in DATASETS:
         s = summarize(d["id"])
-        index.append({
-            "id": d["id"],
-            "label": d["label"],
-            "short_label": d["short_label"],
-            **s,
-        })
+        index.append(
+            {
+                "id": d["id"],
+                "label": d["label"],
+                "short_label": d["short_label"],
+                **s,
+            }
+        )
 
     with open(os.path.join(OUTPUT_DIR, "datasets_index.json"), "w") as f:
         json.dump({"datasets": index}, f, indent=2)

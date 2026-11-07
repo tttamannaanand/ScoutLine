@@ -1,6 +1,9 @@
 __pycache__/
 *.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
 .DS_Store
 .vercel
-data/premier-league-2015-16/
-data/champions-league-finals/
+# raw StatsBomb downloads (regenerate with run_pipeline.sh)
+data/*/
