@@ -50,7 +50,7 @@ Everything is precomputed offline into JSON. The site never runs Python or talks
 ## Quickstart
 
 ```bash
-git clone https://github.com/<your-username>/scoutline.git
+git clone https://github.com/tttamannaanand/scoutline.git
 cd scoutline/pipeline
 pip install -r requirements.txt
 
